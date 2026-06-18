@@ -1,0 +1,18 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #0b0c0f;
+  color: white;
+  overscroll-behavior: none;
+}
+
+.react-flow__node { cursor: grab; }
+.react-flow__node:active { cursor: grabbing; }
+.react-flow__handle { transition: transform 0.1s; }
+.react-flow__handle:hover { transform: scale(1.5); }
