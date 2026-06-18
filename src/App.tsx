@@ -2,8 +2,9 @@ import { useCallback, useRef, useState } from 'react'
 import {
   ReactFlow, Background, Controls, MiniMap,
   addEdge, useNodesState, useEdgesState,
-  Connection, Edge, Node, BackgroundVariant
+  BackgroundVariant
 } from '@xyflow/react'
+import type { Connection, Edge, Node } from '@xyflow/react'
 import '@xyflow/react/dist/style.css'
 import { Sidebar } from './components/Sidebar'
 import { NodeEquipment } from './components/NodeEquipment'
@@ -16,8 +17,8 @@ const nodeTypes = { equipment: NodeEquipment }
 let instanceCounter = 0
 
 export default function App() {
-  const [nodes, setNodes, onNodesChange] = useNodesState([])
-  const [edges, setEdges, onEdgesChange] = useEdgesState([])
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
   const [projectName, setProjectName] = useState('Novo Projeto')
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [saved, setSaved] = useState(false)
@@ -25,10 +26,10 @@ export default function App() {
 
   const onConnect = useCallback(
     (params: Connection) => {
-      const sourceNode = nodes.find(n => n.id === params.source)
-      const eq = sourceNode ? EQUIPMENT.find(e => e.id === sourceNode.data.equipmentId) : null
+      const sourceNode = nodes.find((n: Node) => n.id === params.source)
+      const eq = sourceNode ? EQUIPMENT.find(e => e.id === (sourceNode.data as any).equipmentId) : null
       const port = eq?.ports.find(p => p.id === params.sourceHandle)
-      setEdges(eds => addEdge({
+      setEdges((eds: Edge[]) => addEdge({
         ...params,
         animated: true,
         style: {
@@ -36,7 +37,7 @@ export default function App() {
           strokeWidth: 2
         },
         data: { signalType: port?.signalType || 'SDI', cable: '' }
-      }, eds))
+      } as Edge, eds))
     },
     [nodes]
   )
@@ -50,7 +51,7 @@ export default function App() {
       position: { x: 200 + Math.random() * 150, y: 150 + Math.random() * 150 },
       data: { equipmentId, label: eq?.name || equipmentId }
     }
-    setNodes(nds => [...nds, newNode])
+    setNodes((nds: Node[]) => [...nds, newNode])
   }, [])
 
   const loadTemplate = useCallback((templateId: string) => {
@@ -66,15 +67,15 @@ export default function App() {
 
   const handleExport = async () => {
     if (!flowRef.current) return
-    const connections = edges.map(e => {
-      const src = nodes.find(n => n.id === e.source)
-      const tgt = nodes.find(n => n.id === e.target)
+    const connections = (edges as Edge[]).map((e: Edge) => {
+      const src = (nodes as Node[]).find((n: Node) => n.id === e.source)
+      const tgt = (nodes as Node[]).find((n: Node) => n.id === e.target)
       return {
-        from: (src?.data?.label as string) || e.source,
-        to: (tgt?.data?.label as string) || e.target,
-        signalType: (e.data?.signalType as string) || 'SDI',
-        cable: (e.data?.cable as string) || '—',
-        notes: e.data?.notes as string | undefined
+        from: ((src?.data as any)?.label as string) || e.source,
+        to: ((tgt?.data as any)?.label as string) || e.target,
+        signalType: ((e.data as any)?.signalType as string) || 'SDI',
+        cable: ((e.data as any)?.cable as string) || '—',
+        notes: (e.data as any)?.notes as string | undefined
       }
     })
     await exportToPDF(projectName, flowRef.current, connections)
@@ -102,7 +103,6 @@ export default function App() {
       )}
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        {/* Toolbar */}
         <div style={{
           height: 48,
           backgroundColor: '#1a1b1f',
@@ -118,12 +118,9 @@ export default function App() {
           >
             ☰
           </button>
-
           <span style={{ color: '#E8571A', fontWeight: 900, fontSize: 16, letterSpacing: 2 }}>SIM</span>
           <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11 }}>Connect</span>
-
           <div style={{ flex: 1 }} />
-
           <input
             value={projectName}
             onChange={e => setProjectName(e.target.value)}
@@ -139,58 +136,27 @@ export default function App() {
               outline: 'none'
             }}
           />
-
           <div style={{ flex: 1 }} />
-
           <button
             onClick={clearCanvas}
-            style={{
-              padding: '6px 12px',
-              fontSize: 11,
-              border: '1px solid #2a2b2f',
-              borderRadius: 6,
-              backgroundColor: 'transparent',
-              color: 'rgba(255,255,255,0.4)',
-              cursor: 'pointer'
-            }}
+            style={{ padding: '6px 12px', fontSize: 11, border: '1px solid #2a2b2f', borderRadius: 6, backgroundColor: 'transparent', color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}
           >
             Limpar
           </button>
-
           <button
             onClick={saveProject}
-            style={{
-              padding: '6px 12px',
-              fontSize: 11,
-              border: '1px solid #2a2b2f',
-              borderRadius: 6,
-              backgroundColor: saved ? '#1a4a2a' : 'transparent',
-              color: saved ? '#00C896' : 'rgba(255,255,255,0.6)',
-              cursor: 'pointer',
-              transition: 'all 0.2s'
-            }}
+            style={{ padding: '6px 12px', fontSize: 11, border: '1px solid #2a2b2f', borderRadius: 6, backgroundColor: saved ? '#1a4a2a' : 'transparent', color: saved ? '#00C896' : 'rgba(255,255,255,0.6)', cursor: 'pointer' }}
           >
             {saved ? '✓ Guardado' : 'Guardar'}
           </button>
-
           <button
             onClick={handleExport}
-            style={{
-              padding: '6px 14px',
-              fontSize: 11,
-              border: 'none',
-              borderRadius: 6,
-              backgroundColor: '#E8571A',
-              color: 'white',
-              fontWeight: 'bold',
-              cursor: 'pointer'
-            }}
+            style={{ padding: '6px 14px', fontSize: 11, border: 'none', borderRadius: 6, backgroundColor: '#E8571A', color: 'white', fontWeight: 'bold', cursor: 'pointer' }}
           >
             Export PDF
           </button>
         </div>
 
-        {/* Canvas */}
         <div style={{ flex: 1 }} ref={flowRef}>
           <ReactFlow
             nodes={nodes}
@@ -202,17 +168,9 @@ export default function App() {
             fitView
             proOptions={{ hideAttribution: true }}
           >
-            <Background
-              variant={BackgroundVariant.Dots}
-              gap={20}
-              size={1}
-              color="#2a2b2f"
-            />
+            <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#2a2b2f" />
             <Controls />
-            <MiniMap
-              style={{ backgroundColor: '#1a1b1f' }}
-              nodeColor="#E8571A"
-            />
+            <MiniMap style={{ backgroundColor: '#1a1b1f' }} nodeColor="#E8571A" />
           </ReactFlow>
         </div>
       </div>
