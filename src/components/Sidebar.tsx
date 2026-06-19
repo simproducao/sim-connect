@@ -1,22 +1,36 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { EQUIPMENT, CATEGORIES } from '../data/equipment'
-import { TEMPLATES } from '../data/templates'
+import { TEMPLATES, getUserTemplates, deleteUserTemplate, UserTemplate } from '../data/templates'
 
 interface Props {
   onAddEquipment: (equipmentId: string) => void
   onLoadTemplate: (templateId: string) => void
+  onLoadUserTemplate: (template: UserTemplate) => void
+  refreshKey: number
 }
 
-export function Sidebar({ onAddEquipment, onLoadTemplate }: Props) {
+export function Sidebar({ onAddEquipment, onLoadTemplate, onLoadUserTemplate, refreshKey }: Props) {
   const [tab, setTab] = useState<'equipment' | 'templates'>('equipment')
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
+  const [userTemplates, setUserTemplates] = useState<UserTemplate[]>([])
+
+  useEffect(() => {
+    setUserTemplates(getUserTemplates())
+  }, [refreshKey])
 
   const filtered = EQUIPMENT.filter(e => {
     const matchSearch = e.name.toLowerCase().includes(search.toLowerCase())
     const matchCat = activeCategory ? e.category === activeCategory : true
     return matchSearch && matchCat
   })
+
+  const handleDelete = (id: string) => {
+    if (window.confirm('Apagar este template?')) {
+      deleteUserTemplate(id)
+      setUserTemplates(getUserTemplates())
+    }
+  }
 
   return (
     <div style={{
@@ -28,7 +42,6 @@ export function Sidebar({ onAddEquipment, onLoadTemplate }: Props) {
       height: '100%',
       overflow: 'hidden'
     }}>
-      {/* Tabs */}
       <div style={{ display: 'flex', borderBottom: '1px solid #2a2b2f' }}>
         {(['equipment', 'templates'] as const).map(t => (
           <button
@@ -123,14 +136,22 @@ export function Sidebar({ onAddEquipment, onLoadTemplate }: Props) {
                   border: '1px solid #2a2b2f',
                   backgroundColor: eq.color + '44',
                   cursor: 'pointer',
-                  transition: 'border-color 0.15s'
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8
                 }}
                 onMouseEnter={e => (e.currentTarget.style.borderColor = '#E8571A')}
                 onMouseLeave={e => (e.currentTarget.style.borderColor = '#2a2b2f')}
               >
-                <div style={{ color: 'white', fontSize: 12, fontWeight: 'bold' }}>{eq.name}</div>
-                <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, marginTop: 2 }}>
-                  {eq.category} · qty: {eq.quantity}
+                {eq.image && (
+                  <img src={eq.image} alt="" style={{ width: 32, height: 32, objectFit: 'contain', borderRadius: 4, flexShrink: 0 }}
+                    onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+                )}
+                <div>
+                  <div style={{ color: 'white', fontSize: 12, fontWeight: 'bold' }}>{eq.name}</div>
+                  <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, marginTop: 2 }}>
+                    {eq.category} · qty: {eq.quantity}
+                  </div>
                 </div>
               </button>
             ))}
@@ -140,6 +161,9 @@ export function Sidebar({ onAddEquipment, onLoadTemplate }: Props) {
 
       {tab === 'templates' && (
         <div style={{ flex: 1, overflowY: 'auto', padding: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 1 }}>
+            Predefinidos
+          </div>
           {TEMPLATES.map(t => (
             <button
               key={t.id}
@@ -158,6 +182,46 @@ export function Sidebar({ onAddEquipment, onLoadTemplate }: Props) {
               <div style={{ color: 'white', fontSize: 12, fontWeight: 'bold' }}>{t.name}</div>
               <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, marginTop: 4 }}>{t.description}</div>
             </button>
+          ))}
+
+          <div style={{ color: 'rgba(255,255,255,0.3)', fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 1, marginTop: 8 }}>
+            Os meus templates
+          </div>
+          {userTemplates.length === 0 && (
+            <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: 11, fontStyle: 'italic' }}>
+              Ainda não guardaste nenhum. Monta um diagrama e usa "Guardar Template".
+            </div>
+          )}
+          {userTemplates.map(t => (
+            <div
+              key={t.id}
+              style={{
+                padding: 12,
+                borderRadius: 6,
+                border: '1px solid #2a2b2f',
+                backgroundColor: '#0b0c0f',
+                position: 'relative'
+              }}
+            >
+              <button
+                onClick={() => onLoadUserTemplate(t)}
+                style={{ textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', width: '100%', padding: 0 }}
+              >
+                <div style={{ color: 'white', fontSize: 12, fontWeight: 'bold' }}>{t.name}</div>
+                <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 10, marginTop: 4 }}>{t.description}</div>
+              </button>
+              <button
+                onClick={() => handleDelete(t.id)}
+                style={{
+                  position: 'absolute', top: 8, right: 8,
+                  background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)',
+                  cursor: 'pointer', fontSize: 14
+                }}
+                title="Apagar"
+              >
+                ✕
+              </button>
+            </div>
           ))}
         </div>
       )}

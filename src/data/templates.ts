@@ -68,3 +68,43 @@ export const TEMPLATES = [
     ]
   }
 ]
+// ===== Templates guardados pelo utilizador (localStorage) =====
+
+const USER_TEMPLATES_KEY = 'sim-connect-user-templates'
+
+export interface UserTemplate {
+  id: string
+  name: string
+  description: string
+  nodes: any[]
+  edges: any[]
+  createdAt: string
+}
+
+export function getUserTemplates(): UserTemplate[] {
+  try {
+    const raw = localStorage.getItem(USER_TEMPLATES_KEY)
+    return raw ? JSON.parse(raw) : []
+  } catch {
+    return []
+  }
+}
+
+export function saveUserTemplate(name: string, description: string, nodes: any[], edges: any[]): void {
+  const templates = getUserTemplates()
+  const newTemplate: UserTemplate = {
+    id: `user-${Date.now()}`,
+    name,
+    description,
+    nodes,
+    edges,
+    createdAt: new Date().toISOString()
+  }
+  templates.push(newTemplate)
+  localStorage.setItem(USER_TEMPLATES_KEY, JSON.stringify(templates))
+}
+
+export function deleteUserTemplate(id: string): void {
+  const templates = getUserTemplates().filter(t => t.id !== id)
+  localStorage.setItem(USER_TEMPLATES_KEY, JSON.stringify(templates))
+}

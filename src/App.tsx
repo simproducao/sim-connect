@@ -10,7 +10,7 @@ import { Sidebar } from './components/Sidebar'
 import { NodeEquipment } from './components/NodeEquipment'
 import { exportToPDF } from './components/ExportPDF'
 import { EQUIPMENT, SIGNAL_COLORS } from './data/equipment'
-import { TEMPLATES } from './data/templates'
+import { TEMPLATES, saveUserTemplate, UserTemplate } from './data/templates'
 
 const nodeTypes = { equipment: NodeEquipment }
 
@@ -22,6 +22,7 @@ export default function App() {
   const [projectName, setProjectName] = useState('Novo Projeto')
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [saved, setSaved] = useState(false)
+  const [templateRefresh, setTemplateRefresh] = useState(0)
   const flowRef = useRef<HTMLDivElement>(null)
 
   const onConnect = useCallback(
@@ -66,6 +67,28 @@ export default function App() {
     setProjectName(tpl.name)
   }, [nodes])
 
+  const loadUserTemplate = useCallback((tpl: UserTemplate) => {
+    if ((nodes as Node[]).length > 0) {
+      if (!window.confirm('Substituir diagrama atual pelo template?')) return
+    }
+    setNodes(tpl.nodes as unknown as Node[])
+    setEdges(tpl.edges as unknown as Edge[])
+    setProjectName(tpl.name)
+  }, [nodes])
+
+  const handleSaveTemplate = () => {
+    if ((nodes as Node[]).length === 0) {
+      alert('O diagrama está vazio. Adiciona equipamentos primeiro.')
+      return
+    }
+    const name = window.prompt('Nome do template:', projectName)
+    if (!name) return
+    const description = window.prompt('Descrição (opcional):', '') || ''
+    saveUserTemplate(name, description, nodes, edges)
+    setTemplateRefresh(k => k + 1)
+    alert(`Template "${name}" guardado.`)
+  }
+
   const handleExport = async () => {
     if (!flowRef.current) return
     const connections = (edges as Edge[]).map((e: Edge) => {
@@ -100,7 +123,12 @@ export default function App() {
   return (
     <div style={{ display: 'flex', height: '100vh', backgroundColor: '#0b0c0f', overflow: 'hidden' }}>
       {sidebarOpen && (
-        <Sidebar onAddEquipment={addEquipment} onLoadTemplate={loadTemplate} />
+        <Sidebar
+          onAddEquipment={addEquipment}
+          onLoadTemplate={loadTemplate}
+          onLoadUserTemplate={loadUserTemplate}
+          refreshKey={templateRefresh}
+        />
       )}
 
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
@@ -119,7 +147,7 @@ export default function App() {
           >
             ☰
           </button>
-          <span style={{ color: '#E8571A', fontWeight: 900, fontSize: 16, letterSpacing: 2 }}>SIM</span>
+          <img src="/logo.png" alt="SIM" style={{ height: 28, objectFit: 'contain' }} />
           <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11 }}>Connect</span>
           <div style={{ flex: 1 }} />
           <input
@@ -143,6 +171,12 @@ export default function App() {
             style={{ padding: '6px 12px', fontSize: 11, border: '1px solid #2a2b2f', borderRadius: 6, backgroundColor: 'transparent', color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}
           >
             Limpar
+          </button>
+          <button
+            onClick={handleSaveTemplate}
+            style={{ padding: '6px 12px', fontSize: 11, border: '1px solid #2a2b2f', borderRadius: 6, backgroundColor: 'transparent', color: 'rgba(255,255,255,0.6)', cursor: 'pointer' }}
+          >
+            Guardar Template
           </button>
           <button
             onClick={saveProject}

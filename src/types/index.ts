@@ -16,6 +16,7 @@ export interface EquipmentDef {
   color: string
   ports: Port[]
   quantity: number
+  image?: string
 }
 
 export interface DiagramProject {
