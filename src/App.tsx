@@ -26,18 +26,19 @@ export default function App() {
 
   const onConnect = useCallback(
     (params: Connection) => {
-      const sourceNode = nodes.find((n: Node) => n.id === params.source)
+      const sourceNode = (nodes as Node[]).find((n: Node) => n.id === params.source)
       const eq = sourceNode ? EQUIPMENT.find(e => e.id === (sourceNode.data as any).equipmentId) : null
       const port = eq?.ports.find(p => p.id === params.sourceHandle)
       setEdges((eds: Edge[]) => addEdge({
         ...params,
+        id: `edge-${Date.now()}`,
         animated: true,
         style: {
           stroke: port ? SIGNAL_COLORS[port.signalType] : '#E8571A',
           strokeWidth: 2
         },
         data: { signalType: port?.signalType || 'SDI', cable: '' }
-      } as Edge, eds))
+      } as unknown as Edge, eds))
     },
     [nodes]
   )
@@ -57,11 +58,11 @@ export default function App() {
   const loadTemplate = useCallback((templateId: string) => {
     const tpl = TEMPLATES.find(t => t.id === templateId)
     if (!tpl) return
-    if (nodes.length > 0) {
+    if ((nodes as Node[]).length > 0) {
       if (!window.confirm('Substituir diagrama atual pelo template?')) return
     }
-    setNodes(tpl.nodes as Node[])
-    setEdges(tpl.edges as Edge[])
+    setNodes(tpl.nodes as unknown as Node[])
+    setEdges(tpl.edges as unknown as Edge[])
     setProjectName(tpl.name)
   }, [nodes])
 
