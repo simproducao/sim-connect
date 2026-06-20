@@ -1,11 +1,11 @@
 import { EquipmentDef } from '../types'
 
 export const EQUIPMENT: EquipmentDef[] = [
-  // ===== MISTURA =====
+  // ===== ATEMs =====
   {
     id: 'atem-2me-constellation',
     name: 'ATEM 2 M/E Constellation 4K',
-    category: 'MISTURA',
+    category: 'ATEMs',
     color: '#1a3a5c',
     quantity: 1,
     image: '/equipment/atem-2me-constellation.png',
@@ -54,7 +54,7 @@ export const EQUIPMENT: EquipmentDef[] = [
   {
     id: 'atem-2me-production',
     name: 'ATEM 2 M/E Production Studio 4K',
-    category: 'MISTURA',
+    category: 'ATEMs',
     color: '#1a3a5c',
     quantity: 1,
     image: '/equipment/atem-2me-production.png',
@@ -136,11 +136,11 @@ export const EQUIPMENT: EquipmentDef[] = [
       { id: 'ethernet', label: 'ETHERNET/PoE', direction: 'input', signalType: 'ETHERNET' },
     ]
   },
-  // ===== CONVERSÃO =====
+  // ===== Conversores =====
   {
     id: 'decimator-md-hx',
     name: 'Decimator MD-HX',
-    category: 'CONVERSÃO',
+    category: 'Conversores',
     color: '#3a2a1a',
     quantity: 5,
     image: '/equipment/decimator-md-hx.png',
@@ -157,7 +157,7 @@ export const EQUIPMENT: EquipmentDef[] = [
   {
     id: 'decimator-hd',
     name: 'Decimator HD',
-    category: 'CONVERSÃO',
+    category: 'Conversores',
     color: '#3a2a1a',
     quantity: 5,
     ports: [
@@ -169,7 +169,7 @@ export const EQUIPMENT: EquipmentDef[] = [
   {
     id: 'lumantek-shv',
     name: 'Lumantek ez-SHV+ SDI→HDMI',
-    category: 'CONVERSÃO',
+    category: 'Conversores',
     color: '#3a2a1a',
     quantity: 1,
     ports: [
@@ -181,7 +181,7 @@ export const EQUIPMENT: EquipmentDef[] = [
   {
     id: 'micro-conv-bidi',
     name: 'Micro Converter BiDi SDI/HDMI 3G',
-    category: 'CONVERSÃO',
+    category: 'Conversores',
     color: '#3a2a1a',
     quantity: 15,
     image: '/equipment/micro-bidi.png',
@@ -195,7 +195,7 @@ export const EQUIPMENT: EquipmentDef[] = [
   {
     id: 'micro-conv-hdmi-sdi',
     name: 'Micro Converter HDMI→SDI 3G',
-    category: 'CONVERSÃO',
+    category: 'Conversores',
     color: '#3a2a1a',
     quantity: 4,
     ports: [
@@ -207,7 +207,7 @@ export const EQUIPMENT: EquipmentDef[] = [
   {
     id: 'micro-conv-sdi-hdmi',
     name: 'Micro Converter SDI→HDMI 3G',
-    category: 'CONVERSÃO',
+    category: 'Conversores',
     color: '#3a2a1a',
     quantity: 5,
     ports: [
@@ -219,7 +219,7 @@ export const EQUIPMENT: EquipmentDef[] = [
   {
     id: 'mini-conv-optical',
     name: 'Mini Converter Optical Fiber 12G',
-    category: 'CONVERSÃO',
+    category: 'Conversores',
     color: '#3a2a1a',
     quantity: 8,
     ports: [
@@ -232,7 +232,7 @@ export const EQUIPMENT: EquipmentDef[] = [
   {
     id: 'mini-conv-sdi-distribution',
     name: 'Mini Converter SDI Distribution',
-    category: 'CONVERSÃO',
+    category: 'Conversores',
     color: '#3a2a1a',
     quantity: 2,
     ports: [
@@ -250,7 +250,7 @@ export const EQUIPMENT: EquipmentDef[] = [
   {
     id: 'mini-conv-updowncross',
     name: 'Mini Converter UpDownCross HD',
-    category: 'CONVERSÃO',
+    category: 'Conversores',
     color: '#3a2a1a',
     quantity: 2,
     ports: [
@@ -262,7 +262,7 @@ export const EQUIPMENT: EquipmentDef[] = [
   {
     id: 'mini-conv-analog-sdi',
     name: 'Mini Converter Analog→SDI',
-    category: 'CONVERSÃO',
+    category: 'Conversores',
     color: '#3a2a1a',
     quantity: 2,
     ports: [
@@ -274,7 +274,7 @@ export const EQUIPMENT: EquipmentDef[] = [
   {
     id: 'mini-conv-sdi-analog',
     name: 'Mini Converter SDI→Analog',
-    category: 'CONVERSÃO',
+    category: 'Conversores',
     color: '#3a2a1a',
     quantity: 2,
     ports: [
@@ -286,7 +286,7 @@ export const EQUIPMENT: EquipmentDef[] = [
   {
     id: 'mini-conv-audio-sdi',
     name: 'Mini Converter Audio→SDI',
-    category: 'CONVERSÃO',
+    category: 'Conversores',
     color: '#3a2a1a',
     quantity: 2,
     ports: [
@@ -298,7 +298,7 @@ export const EQUIPMENT: EquipmentDef[] = [
   {
     id: 'mini-conv-sdi-audio',
     name: 'Mini Converter SDI→Audio',
-    category: 'CONVERSÃO',
+    category: 'Conversores',
     color: '#3a2a1a',
     quantity: 2,
     ports: [
@@ -524,7 +524,7 @@ export const SIGNAL_COLORS: Record<string, string> = {
 }
 
 export const CATEGORIES = [
-  'MISTURA', 'CÂMARA', 'PTZ', 'CONVERSÃO',
+  'ATEMs', 'CÂMARA', 'PTZ', 'Conversores',
   'FIBRA', 'ÁUDIO', 'DANTE', 'GRAVAÇÃO',
   'COMPUTADOR', 'CONTROLO', 'ECRÃ'
 ]

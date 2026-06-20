@@ -205,7 +205,16 @@ export default function App() {
           >
             <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#2a2b2f" />
             <Controls />
-            <MiniMap style={{ backgroundColor: '#1a1b1f' }} nodeColor="#E8571A" />
+            <MiniMap
+              style={{ backgroundColor: '#1a1b1f', border: '1px solid #2a2b2f' }}
+              maskColor="rgba(0,0,0,0.6)"
+              nodeColor={(n) => {
+                const eq = EQUIPMENT.find(e => e.id === (n.data as any)?.equipmentId)
+                return eq ? eq.color : '#E8571A'
+              }}
+              nodeStrokeColor="#E8571A"
+              nodeBorderRadius={4}
+            />
           </ReactFlow>
         </div>
       </div>
