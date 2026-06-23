@@ -11,13 +11,23 @@ export default defineConfig({
         name: 'SIM Connect',
         short_name: 'SIM Connect',
         description: 'Diagramas de sinal AV — SIM Produção',
-        theme_color: '#0b0c0f',
-        background_color: '#0b0c0f',
+        theme_color: '#1a1b1f',
+        background_color: '#ffffff',
         display: 'standalone',
         orientation: 'any',
         icons: [
-          { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' }
+          {
+            src: '/icon-192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any maskable'
+          },
+          {
+            src: '/icon-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any maskable'
+          }
         ]
       }
     })
