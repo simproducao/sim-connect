@@ -142,16 +142,24 @@ export default function App() {
   if (!authed) return <LoginScreen onLogin={login} />
 
   return (
-    <div style={{ display: 'flex', height: '100vh', backgroundColor: '#0b0c0f', overflow: 'hidden', flexDirection: 'column' }}>
+    <div style={{
+      display: 'flex',
+      height: '100vh',
+      backgroundColor: '#0b0c0f',
+      overflow: 'hidden',
+      flexDirection: 'column'
+    }}>
 
-      {/* TOOLBAR */}
+      {/* TOOLBAR TOPO */}
       <div style={{
-        height: 48,
         backgroundColor: '#1a1b1f',
         borderBottom: '1px solid #2a2b2f',
         display: 'flex',
         alignItems: 'center',
-        padding: '0 12px',
+        padding: `env(safe-area-inset-top) 12px 0 12px`,
+        minHeight: 48,
+        paddingBottom: 8,
+        paddingTop: `max(env(safe-area-inset-top), 8px)`,
         gap: 8,
         flexShrink: 0,
         zIndex: 10
@@ -180,7 +188,7 @@ export default function App() {
             fontSize: 11,
             color: 'white',
             textAlign: 'center',
-            width: isMobile ? 120 : 180,
+            width: isMobile ? 130 : 180,
             outline: 'none'
           }}
         />
@@ -208,7 +216,7 @@ export default function App() {
         )}
       </div>
 
-      {/* MAIN */}
+      {/* CONTEÚDO PRINCIPAL */}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
 
         {/* SIDEBAR DESKTOP */}
@@ -254,7 +262,7 @@ export default function App() {
             )}
           </ReactFlow>
 
-          {/* BOTÃO APAGAR NODE SELECIONADO */}
+          {/* BOTÃO APAGAR */}
           {selectedNodeId && (
             <button
               onClick={deleteSelected}
@@ -264,14 +272,17 @@ export default function App() {
                 right: 12,
                 backgroundColor: '#ff4444',
                 border: 'none',
-                borderRadius: 8,
-                padding: '10px 16px',
+                borderRadius: 10,
+                padding: '12px 20px',
                 color: 'white',
                 fontWeight: 'bold',
-                fontSize: 13,
+                fontSize: 15,
                 cursor: 'pointer',
                 zIndex: 100,
-                boxShadow: '0 4px 12px rgba(255,68,68,0.4)'
+                boxShadow: '0 4px 16px rgba(255,68,68,0.5)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 8
               }}
             >
               🗑 Apagar
@@ -283,71 +294,50 @@ export default function App() {
       {/* BARRA MOBILE DE BAIXO */}
       {isMobile && (
         <div style={{
-          height: 64,
           backgroundColor: '#1a1b1f',
           borderTop: '1px solid #2a2b2f',
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-around',
+          alignItems: 'stretch',
           flexShrink: 0,
-          zIndex: 10
+          zIndex: 10,
+          paddingBottom: 'env(safe-area-inset-bottom)'
         }}>
-          <button
-            onClick={() => setMobileTab(t => t === 'equipment' ? null : 'equipment')}
-            style={{
-              flex: 1, height: '100%', border: 'none',
-              backgroundColor: mobileTab === 'equipment' ? '#E8571A22' : 'transparent',
-              color: mobileTab === 'equipment' ? '#E8571A' : 'rgba(255,255,255,0.5)',
-              fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase',
-              letterSpacing: 0.5, cursor: 'pointer', display: 'flex',
-              flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4
-            }}
-          >
-            <span style={{ fontSize: 20 }}>📦</span>
-            Equipamentos
-          </button>
-          <button
-            onClick={() => setMobileTab(t => t === 'templates' ? null : 'templates')}
-            style={{
-              flex: 1, height: '100%', border: 'none',
-              backgroundColor: mobileTab === 'templates' ? '#E8571A22' : 'transparent',
-              color: mobileTab === 'templates' ? '#E8571A' : 'rgba(255,255,255,0.5)',
-              fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase',
-              letterSpacing: 0.5, cursor: 'pointer', display: 'flex',
-              flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4
-            }}
-          >
-            <span style={{ fontSize: 20 }}>📋</span>
-            Templates
-          </button>
-          <button
-            onClick={saveProject}
-            style={{
-              flex: 1, height: '100%', border: 'none',
-              backgroundColor: saved ? '#1a4a2a' : 'transparent',
-              color: saved ? '#00C896' : 'rgba(255,255,255,0.5)',
-              fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase',
-              letterSpacing: 0.5, cursor: 'pointer', display: 'flex',
-              flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4
-            }}
-          >
-            <span style={{ fontSize: 20 }}>💾</span>
-            {saved ? '✓ Guardado' : 'Guardar'}
-          </button>
-          <button
-            onClick={logout}
-            style={{
-              flex: 1, height: '100%', border: 'none',
-              backgroundColor: 'transparent',
-              color: 'rgba(255,255,255,0.3)',
-              fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase',
-              letterSpacing: 0.5, cursor: 'pointer', display: 'flex',
-              flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4
-            }}
-          >
-            <span style={{ fontSize: 20 }}>🚪</span>
-            Sair
-          </button>
+          {[
+            { key: 'equipment', icon: '📦', label: 'Equipamentos' },
+            { key: 'templates', icon: '📋', label: 'Templates' },
+            { key: 'guardar', icon: saved ? '✓' : '💾', label: saved ? 'Guardado' : 'Guardar' },
+            { key: 'sair', icon: '🚪', label: 'Sair' },
+          ].map(btn => (
+            <button
+              key={btn.key}
+              onClick={() => {
+                if (btn.key === 'equipment') setMobileTab(t => t === 'equipment' ? null : 'equipment')
+                else if (btn.key === 'templates') setMobileTab(t => t === 'templates' ? null : 'templates')
+                else if (btn.key === 'guardar') saveProject()
+                else if (btn.key === 'sair') logout()
+              }}
+              style={{
+                flex: 1,
+                minHeight: 56,
+                border: 'none',
+                backgroundColor: (btn.key === 'equipment' && mobileTab === 'equipment') || (btn.key === 'templates' && mobileTab === 'templates') ? '#E8571A22' : (btn.key === 'guardar' && saved) ? '#1a4a2a' : 'transparent',
+                color: (btn.key === 'equipment' && mobileTab === 'equipment') || (btn.key === 'templates' && mobileTab === 'templates') ? '#E8571A' : (btn.key === 'guardar' && saved) ? '#00C896' : 'rgba(255,255,255,0.5)',
+                fontSize: 9,
+                fontWeight: 'bold',
+                textTransform: 'uppercase',
+                letterSpacing: 0.5,
+                cursor: 'pointer',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 4
+              }}
+            >
+              <span style={{ fontSize: 22 }}>{btn.icon}</span>
+              {btn.label}
+            </button>
+          ))}
         </div>
       )}
 
