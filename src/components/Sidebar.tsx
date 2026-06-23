@@ -7,9 +7,12 @@ interface Props {
   onLoadTemplate: (templateId: string) => void
   onLoadUserTemplate: (template: UserTemplate) => void
   refreshKey: number
+  isMobile: boolean
+  mobileTab: 'equipment' | 'templates' | null
+  onCloseMobile: () => void
 }
 
-export function Sidebar({ onAddEquipment, onLoadTemplate, onLoadUserTemplate, refreshKey }: Props) {
+export function Sidebar({ onAddEquipment, onLoadTemplate, onLoadUserTemplate, refreshKey, isMobile, mobileTab, onCloseMobile }: Props) {
   const [tab, setTab] = useState<'equipment' | 'templates'>('equipment')
   const [search, setSearch] = useState('')
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
@@ -18,6 +21,10 @@ export function Sidebar({ onAddEquipment, onLoadTemplate, onLoadUserTemplate, re
   useEffect(() => {
     setUserTemplates(getUserTemplates())
   }, [refreshKey])
+
+  useEffect(() => {
+    if (mobileTab) setTab(mobileTab)
+  }, [mobileTab])
 
   const filtered = EQUIPMENT.filter(e => {
     const matchSearch = e.name.toLowerCase().includes(search.toLowerCase())
@@ -32,16 +39,52 @@ export function Sidebar({ onAddEquipment, onLoadTemplate, onLoadUserTemplate, re
     }
   }
 
-  return (
-    <div style={{
-      width: 280,
-      backgroundColor: '#1a1b1f',
-      borderRight: '1px solid #2a2b2f',
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100%',
-      overflow: 'hidden'
-    }}>
+  const handleAddEquipment = (id: string) => {
+    onAddEquipment(id)
+    if (isMobile) onCloseMobile()
+  }
+
+  const handleLoadTemplate = (id: string) => {
+    onLoadTemplate(id)
+    if (isMobile) onCloseMobile()
+  }
+
+  const handleLoadUserTemplate = (t: UserTemplate) => {
+    onLoadUserTemplate(t)
+    if (isMobile) onCloseMobile()
+  }
+
+  const sidebarStyle: React.CSSProperties = isMobile ? {
+    position: 'fixed',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '70vh',
+    backgroundColor: '#1a1b1f',
+    borderTop: '1px solid #2a2b2f',
+    borderRadius: '16px 16px 0 0',
+    zIndex: 1000,
+    display: 'flex',
+    flexDirection: 'column',
+    boxShadow: '0 -8px 32px rgba(0,0,0,0.6)'
+  } : {
+    width: 280,
+    backgroundColor: '#1a1b1f',
+    borderRight: '1px solid #2a2b2f',
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100%',
+    overflow: 'hidden'
+  }
+
+  const content = (
+    <div style={sidebarStyle}>
+      {isMobile && (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0 4px' }}>
+          <div style={{ width: 40, height: 4, backgroundColor: '#2a2b2f', borderRadius: 2 }} />
+        </div>
+      )}
+
       <div style={{ display: 'flex', borderBottom: '1px solid #2a2b2f' }}>
         {(['equipment', 'templates'] as const).map(t => (
           <button
@@ -64,6 +107,14 @@ export function Sidebar({ onAddEquipment, onLoadTemplate, onLoadUserTemplate, re
             {t === 'equipment' ? 'Equipamentos' : 'Templates'}
           </button>
         ))}
+        {isMobile && (
+          <button
+            onClick={onCloseMobile}
+            style={{ padding: '12px 16px', border: 'none', backgroundColor: 'transparent', color: 'rgba(255,255,255,0.4)', fontSize: 18, cursor: 'pointer' }}
+          >
+            ✕
+          </button>
+        )}
       </div>
 
       {tab === 'equipment' && (
@@ -92,7 +143,7 @@ export function Sidebar({ onAddEquipment, onLoadTemplate, onLoadUserTemplate, re
             <button
               onClick={() => setActiveCategory(null)}
               style={{
-                padding: '3px 8px',
+                padding: '4px 10px',
                 borderRadius: 4,
                 fontSize: 10,
                 fontWeight: 'bold',
@@ -109,7 +160,7 @@ export function Sidebar({ onAddEquipment, onLoadTemplate, onLoadUserTemplate, re
                 key={cat}
                 onClick={() => setActiveCategory(activeCategory === cat ? null : cat)}
                 style={{
-                  padding: '3px 8px',
+                  padding: '4px 10px',
                   borderRadius: 4,
                   fontSize: 10,
                   fontWeight: 'bold',
@@ -128,7 +179,7 @@ export function Sidebar({ onAddEquipment, onLoadTemplate, onLoadUserTemplate, re
             {filtered.map(eq => (
               <button
                 key={eq.id}
-                onClick={() => onAddEquipment(eq.id)}
+                onClick={() => handleAddEquipment(eq.id)}
                 style={{
                   textAlign: 'left',
                   padding: 10,
@@ -144,8 +195,12 @@ export function Sidebar({ onAddEquipment, onLoadTemplate, onLoadUserTemplate, re
                 onMouseLeave={e => (e.currentTarget.style.borderColor = '#2a2b2f')}
               >
                 {eq.image && (
-                  <img src={eq.image} alt="" style={{ width: 32, height: 32, objectFit: 'contain', borderRadius: 4, flexShrink: 0 }}
-                    onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }} />
+                  <img
+                    src={eq.image}
+                    alt=""
+                    style={{ width: 32, height: 32, objectFit: 'contain', borderRadius: 4, flexShrink: 0 }}
+                    onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+                  />
                 )}
                 <div>
                   <div style={{ color: 'white', fontSize: 12, fontWeight: 'bold' }}>{eq.name}</div>
@@ -167,7 +222,7 @@ export function Sidebar({ onAddEquipment, onLoadTemplate, onLoadUserTemplate, re
           {TEMPLATES.map(t => (
             <button
               key={t.id}
-              onClick={() => onLoadTemplate(t.id)}
+              onClick={() => handleLoadTemplate(t.id)}
               style={{
                 textAlign: 'left',
                 padding: 12,
@@ -189,22 +244,16 @@ export function Sidebar({ onAddEquipment, onLoadTemplate, onLoadUserTemplate, re
           </div>
           {userTemplates.length === 0 && (
             <div style={{ color: 'rgba(255,255,255,0.25)', fontSize: 11, fontStyle: 'italic' }}>
-              Ainda não guardaste nenhum. Monta um diagrama e usa "Guardar Template".
+              Ainda não guardaste nenhum.
             </div>
           )}
           {userTemplates.map(t => (
             <div
               key={t.id}
-              style={{
-                padding: 12,
-                borderRadius: 6,
-                border: '1px solid #2a2b2f',
-                backgroundColor: '#0b0c0f',
-                position: 'relative'
-              }}
+              style={{ padding: 12, borderRadius: 6, border: '1px solid #2a2b2f', backgroundColor: '#0b0c0f', position: 'relative' }}
             >
               <button
-                onClick={() => onLoadUserTemplate(t)}
+                onClick={() => handleLoadUserTemplate(t)}
                 style={{ textAlign: 'left', background: 'none', border: 'none', cursor: 'pointer', width: '100%', padding: 0 }}
               >
                 <div style={{ color: 'white', fontSize: 12, fontWeight: 'bold' }}>{t.name}</div>
@@ -212,19 +261,32 @@ export function Sidebar({ onAddEquipment, onLoadTemplate, onLoadUserTemplate, re
               </button>
               <button
                 onClick={() => handleDelete(t.id)}
-                style={{
-                  position: 'absolute', top: 8, right: 8,
-                  background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)',
-                  cursor: 'pointer', fontSize: 14
-                }}
-                title="Apagar"
-              >
-                ✕
-              </button>
+                style={{ position: 'absolute', top: 8, right: 8, background: 'none', border: 'none', color: 'rgba(255,255,255,0.3)', cursor: 'pointer', fontSize: 14 }}
+              >✕</button>
             </div>
           ))}
         </div>
       )}
     </div>
   )
+
+  if (isMobile && mobileTab === null) return null
+
+  if (isMobile) {
+    return (
+      <>
+        <div
+          onClick={onCloseMobile}
+          style={{
+            position: 'fixed', inset: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            zIndex: 999
+          }}
+        />
+        {content}
+      </>
+    )
+  }
+
+  return content
 }

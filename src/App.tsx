@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useRef, useState, useEffect } from 'react'
 import {
   ReactFlow, Background, Controls, MiniMap,
   addEdge, useNodesState, useEdgesState,
@@ -17,14 +17,27 @@ const nodeTypes = { equipment: NodeEquipment }
 
 let instanceCounter = 0
 
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth < 768)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
+  return isMobile
+}
+
 export default function App() {
   const { authed, login, logout } = useAuth()
+  const isMobile = useIsMobile()
   const [nodes, setNodes, onNodesChange] = useNodesState<Node>([])
   const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([])
   const [projectName, setProjectName] = useState('Novo Projeto')
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [saved, setSaved] = useState(false)
   const [templateRefresh, setTemplateRefresh] = useState(0)
+  const [mobileTab, setMobileTab] = useState<'equipment' | 'templates' | null>(null)
+  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
   const flowRef = useRef<HTMLDivElement>(null)
 
   const onConnect = useCallback((params: Connection) => {
@@ -119,72 +132,100 @@ export default function App() {
     }
   }, [])
 
+  const deleteSelected = useCallback(() => {
+    if (!selectedNodeId) return
+    setNodes((nds: Node[]) => nds.filter(n => n.id !== selectedNodeId))
+    setEdges((eds: Edge[]) => eds.filter(e => e.source !== selectedNodeId && e.target !== selectedNodeId))
+    setSelectedNodeId(null)
+  }, [selectedNodeId])
+
   if (!authed) return <LoginScreen onLogin={login} />
 
   return (
-    <div style={{ display: 'flex', height: '100vh', backgroundColor: '#0b0c0f', overflow: 'hidden' }}>
-      {sidebarOpen && (
-        <Sidebar
-          onAddEquipment={addEquipment}
-          onLoadTemplate={loadTemplate}
-          onLoadUserTemplate={loadUserTemplate}
-          refreshKey={templateRefresh}
-        />
-      )}
+    <div style={{ display: 'flex', height: '100vh', backgroundColor: '#0b0c0f', overflow: 'hidden', flexDirection: 'column' }}>
 
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
-        <div style={{
-          height: 48,
-          backgroundColor: '#1a1b1f',
-          borderBottom: '1px solid #2a2b2f',
-          display: 'flex',
-          alignItems: 'center',
-          padding: '0 16px',
-          gap: 12
-        }}>
+      {/* TOOLBAR */}
+      <div style={{
+        height: 48,
+        backgroundColor: '#1a1b1f',
+        borderBottom: '1px solid #2a2b2f',
+        display: 'flex',
+        alignItems: 'center',
+        padding: '0 12px',
+        gap: 8,
+        flexShrink: 0,
+        zIndex: 10
+      }}>
+        {!isMobile && (
           <button
             onClick={() => setSidebarOpen(s => !s)}
             style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', fontSize: 18, cursor: 'pointer', padding: 4 }}
           >
             ☰
           </button>
-          <img src="/logo.png" alt="SIM" style={{ height: 36, objectFit: 'contain' }} />
+        )}
+        <img src="/logo.png" alt="SIM" style={{ height: 30, width: 'auto', objectFit: 'contain' }} />
+        {!isMobile && (
           <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11 }}>Connect</span>
-          <div style={{ flex: 1 }} />
-          <input
-            value={projectName}
-            onChange={e => setProjectName(e.target.value)}
-            style={{
-              backgroundColor: '#0b0c0f',
-              border: '1px solid #2a2b2f',
-              borderRadius: 6,
-              padding: '4px 12px',
-              fontSize: 12,
-              color: 'white',
-              textAlign: 'center',
-              width: 200,
-              outline: 'none'
-            }}
-          />
-          <div style={{ flex: 1 }} />
-          <button onClick={clearCanvas} style={{ padding: '6px 12px', fontSize: 11, border: '1px solid #2a2b2f', borderRadius: 6, backgroundColor: 'transparent', color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}>
-            Limpar
-          </button>
-          <button onClick={handleSaveTemplate} style={{ padding: '6px 12px', fontSize: 11, border: '1px solid #2a2b2f', borderRadius: 6, backgroundColor: 'transparent', color: 'rgba(255,255,255,0.6)', cursor: 'pointer' }}>
-            Guardar Template
-          </button>
-          <button onClick={saveProject} style={{ padding: '6px 12px', fontSize: 11, border: '1px solid #2a2b2f', borderRadius: 6, backgroundColor: saved ? '#1a4a2a' : 'transparent', color: saved ? '#00C896' : 'rgba(255,255,255,0.6)', cursor: 'pointer' }}>
-            {saved ? '✓ Guardado' : 'Guardar'}
-          </button>
-          <button onClick={handleExport} style={{ padding: '6px 14px', fontSize: 11, border: 'none', borderRadius: 6, backgroundColor: '#E8571A', color: 'white', fontWeight: 'bold', cursor: 'pointer' }}>
-            Export PDF
-          </button>
-          <button onClick={logout} style={{ padding: '6px 12px', fontSize: 11, border: '1px solid #2a2b2f', borderRadius: 6, backgroundColor: 'transparent', color: 'rgba(255,255,255,0.3)', cursor: 'pointer' }}>
+        )}
+        <div style={{ flex: 1 }} />
+        <input
+          value={projectName}
+          onChange={e => setProjectName(e.target.value)}
+          style={{
+            backgroundColor: '#0b0c0f',
+            border: '1px solid #2a2b2f',
+            borderRadius: 6,
+            padding: '4px 8px',
+            fontSize: 11,
+            color: 'white',
+            textAlign: 'center',
+            width: isMobile ? 120 : 180,
+            outline: 'none'
+          }}
+        />
+        <div style={{ flex: 1 }} />
+        {!isMobile && (
+          <>
+            <button onClick={clearCanvas} style={{ padding: '6px 10px', fontSize: 11, border: '1px solid #2a2b2f', borderRadius: 6, backgroundColor: 'transparent', color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}>
+              Limpar
+            </button>
+            <button onClick={handleSaveTemplate} style={{ padding: '6px 10px', fontSize: 11, border: '1px solid #2a2b2f', borderRadius: 6, backgroundColor: 'transparent', color: 'rgba(255,255,255,0.6)', cursor: 'pointer' }}>
+              Guardar Template
+            </button>
+            <button onClick={saveProject} style={{ padding: '6px 10px', fontSize: 11, border: '1px solid #2a2b2f', borderRadius: 6, backgroundColor: saved ? '#1a4a2a' : 'transparent', color: saved ? '#00C896' : 'rgba(255,255,255,0.6)', cursor: 'pointer' }}>
+              {saved ? '✓ Guardado' : 'Guardar'}
+            </button>
+          </>
+        )}
+        <button onClick={handleExport} style={{ padding: '6px 12px', fontSize: 11, border: 'none', borderRadius: 6, backgroundColor: '#E8571A', color: 'white', fontWeight: 'bold', cursor: 'pointer' }}>
+          PDF
+        </button>
+        {!isMobile && (
+          <button onClick={logout} style={{ padding: '6px 10px', fontSize: 11, border: '1px solid #2a2b2f', borderRadius: 6, backgroundColor: 'transparent', color: 'rgba(255,255,255,0.3)', cursor: 'pointer' }}>
             Sair
           </button>
-        </div>
+        )}
+      </div>
 
-        <div style={{ flex: 1 }} ref={flowRef}>
+      {/* MAIN */}
+      <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
+
+        {/* SIDEBAR DESKTOP */}
+        {!isMobile && sidebarOpen && (
+          <Sidebar
+            onAddEquipment={addEquipment}
+            onLoadTemplate={loadTemplate}
+            onLoadUserTemplate={loadUserTemplate}
+            refreshKey={templateRefresh}
+            isMobile={false}
+            mobileTab={null}
+            onCloseMobile={() => {}}
+          />
+        )}
+
+        {/* CANVAS */}
+        <div style={{ flex: 1, position: 'relative' }} ref={flowRef}>
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -194,22 +235,134 @@ export default function App() {
             nodeTypes={nodeTypes}
             fitView
             proOptions={{ hideAttribution: true }}
+            onNodeClick={(_, node) => setSelectedNodeId(node.id)}
+            onPaneClick={() => setSelectedNodeId(null)}
           >
             <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#2a2b2f" />
-            <Controls />
-            <MiniMap
-              style={{ backgroundColor: '#1a1b1f', border: '1px solid #2a2b2f' }}
-              maskColor="rgba(0,0,0,0.6)"
-              nodeColor={(n) => {
-                const eq = EQUIPMENT.find(e => e.id === (n.data as any)?.equipmentId)
-                return eq ? eq.color : '#E8571A'
-              }}
-              nodeStrokeColor="#E8571A"
-              nodeBorderRadius={4}
-            />
+            {!isMobile && <Controls />}
+            {!isMobile && (
+              <MiniMap
+                style={{ backgroundColor: '#1a1b1f', border: '1px solid #2a2b2f' }}
+                maskColor="rgba(0,0,0,0.6)"
+                nodeColor={(n) => {
+                  const eq = EQUIPMENT.find(e => e.id === (n.data as any)?.equipmentId)
+                  return eq ? eq.color : '#E8571A'
+                }}
+                nodeStrokeColor="#E8571A"
+                nodeBorderRadius={4}
+              />
+            )}
           </ReactFlow>
+
+          {/* BOTÃO APAGAR NODE SELECIONADO */}
+          {selectedNodeId && (
+            <button
+              onClick={deleteSelected}
+              style={{
+                position: 'absolute',
+                top: 12,
+                right: 12,
+                backgroundColor: '#ff4444',
+                border: 'none',
+                borderRadius: 8,
+                padding: '10px 16px',
+                color: 'white',
+                fontWeight: 'bold',
+                fontSize: 13,
+                cursor: 'pointer',
+                zIndex: 100,
+                boxShadow: '0 4px 12px rgba(255,68,68,0.4)'
+              }}
+            >
+              🗑 Apagar
+            </button>
+          )}
         </div>
       </div>
+
+      {/* BARRA MOBILE DE BAIXO */}
+      {isMobile && (
+        <div style={{
+          height: 64,
+          backgroundColor: '#1a1b1f',
+          borderTop: '1px solid #2a2b2f',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-around',
+          flexShrink: 0,
+          zIndex: 10
+        }}>
+          <button
+            onClick={() => setMobileTab(t => t === 'equipment' ? null : 'equipment')}
+            style={{
+              flex: 1, height: '100%', border: 'none',
+              backgroundColor: mobileTab === 'equipment' ? '#E8571A22' : 'transparent',
+              color: mobileTab === 'equipment' ? '#E8571A' : 'rgba(255,255,255,0.5)',
+              fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase',
+              letterSpacing: 0.5, cursor: 'pointer', display: 'flex',
+              flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4
+            }}
+          >
+            <span style={{ fontSize: 20 }}>📦</span>
+            Equipamentos
+          </button>
+          <button
+            onClick={() => setMobileTab(t => t === 'templates' ? null : 'templates')}
+            style={{
+              flex: 1, height: '100%', border: 'none',
+              backgroundColor: mobileTab === 'templates' ? '#E8571A22' : 'transparent',
+              color: mobileTab === 'templates' ? '#E8571A' : 'rgba(255,255,255,0.5)',
+              fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase',
+              letterSpacing: 0.5, cursor: 'pointer', display: 'flex',
+              flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4
+            }}
+          >
+            <span style={{ fontSize: 20 }}>📋</span>
+            Templates
+          </button>
+          <button
+            onClick={saveProject}
+            style={{
+              flex: 1, height: '100%', border: 'none',
+              backgroundColor: saved ? '#1a4a2a' : 'transparent',
+              color: saved ? '#00C896' : 'rgba(255,255,255,0.5)',
+              fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase',
+              letterSpacing: 0.5, cursor: 'pointer', display: 'flex',
+              flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4
+            }}
+          >
+            <span style={{ fontSize: 20 }}>💾</span>
+            {saved ? '✓ Guardado' : 'Guardar'}
+          </button>
+          <button
+            onClick={logout}
+            style={{
+              flex: 1, height: '100%', border: 'none',
+              backgroundColor: 'transparent',
+              color: 'rgba(255,255,255,0.3)',
+              fontSize: 10, fontWeight: 'bold', textTransform: 'uppercase',
+              letterSpacing: 0.5, cursor: 'pointer', display: 'flex',
+              flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4
+            }}
+          >
+            <span style={{ fontSize: 20 }}>🚪</span>
+            Sair
+          </button>
+        </div>
+      )}
+
+      {/* SIDEBAR MOBILE */}
+      {isMobile && (
+        <Sidebar
+          onAddEquipment={addEquipment}
+          onLoadTemplate={loadTemplate}
+          onLoadUserTemplate={loadUserTemplate}
+          refreshKey={templateRefresh}
+          isMobile={true}
+          mobileTab={mobileTab}
+          onCloseMobile={() => setMobileTab(null)}
+        />
+      )}
     </div>
   )
 }
