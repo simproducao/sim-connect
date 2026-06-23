@@ -14,7 +14,6 @@ import { TEMPLATES, saveUserTemplate, UserTemplate } from './data/templates'
 import { useAuth, LoginScreen } from './Auth'
 
 const nodeTypes = { equipment: NodeEquipment }
-
 let instanceCounter = 0
 
 function useIsMobile() {
@@ -48,10 +47,7 @@ export default function App() {
       ...params,
       id: `edge-${Date.now()}`,
       animated: true,
-      style: {
-        stroke: port ? SIGNAL_COLORS[port.signalType] : '#E8571A',
-        strokeWidth: 2
-      },
+      style: { stroke: port ? SIGNAL_COLORS[port.signalType] : '#E8571A', strokeWidth: 2 },
       data: { signalType: port?.signalType || 'SDI', cable: '' }
     } as unknown as Edge, eds))
   }, [nodes])
@@ -62,7 +58,7 @@ export default function App() {
     const newNode: Node = {
       id: `node-${instanceCounter}`,
       type: 'equipment',
-      position: { x: 200 + Math.random() * 150, y: 150 + Math.random() * 150 },
+      position: { x: 100 + Math.random() * 200, y: 100 + Math.random() * 200 },
       data: { equipmentId, label: eq?.name || equipmentId }
     }
     setNodes((nds: Node[]) => [...nds, newNode])
@@ -71,32 +67,25 @@ export default function App() {
   const loadTemplate = useCallback((templateId: string) => {
     const tpl = TEMPLATES.find(t => t.id === templateId)
     if (!tpl) return
-    if ((nodes as Node[]).length > 0) {
-      if (!window.confirm('Substituir diagrama atual pelo template?')) return
-    }
+    if ((nodes as Node[]).length > 0 && !window.confirm('Substituir diagrama atual?')) return
     setNodes(tpl.nodes as unknown as Node[])
     setEdges(tpl.edges as unknown as Edge[])
     setProjectName(tpl.name)
   }, [nodes])
 
   const loadUserTemplate = useCallback((tpl: UserTemplate) => {
-    if ((nodes as Node[]).length > 0) {
-      if (!window.confirm('Substituir diagrama atual pelo template?')) return
-    }
+    if ((nodes as Node[]).length > 0 && !window.confirm('Substituir diagrama atual?')) return
     setNodes(tpl.nodes as unknown as Node[])
     setEdges(tpl.edges as unknown as Edge[])
     setProjectName(tpl.name)
   }, [nodes])
 
   const handleSaveTemplate = useCallback(() => {
-    if ((nodes as Node[]).length === 0) {
-      alert('O diagrama está vazio. Adiciona equipamentos primeiro.')
-      return
-    }
+    if ((nodes as Node[]).length === 0) { alert('Diagrama vazio.'); return }
     const name = window.prompt('Nome do template:', projectName)
     if (!name) return
-    const description = window.prompt('Descrição (opcional):', '') || ''
-    saveUserTemplate(name, description, nodes, edges)
+    const desc = window.prompt('Descrição:', '') || ''
+    saveUserTemplate(name, desc, nodes, edges)
     setTemplateRefresh(k => k + 1)
     alert(`Template "${name}" guardado.`)
   }, [nodes, edges, projectName])
@@ -118,18 +107,13 @@ export default function App() {
   }, [nodes, edges, projectName])
 
   const saveProject = useCallback(() => {
-    const data = { projectName, nodes, edges, savedAt: new Date().toISOString() }
-    localStorage.setItem(`sim-connect-${projectName}`, JSON.stringify(data))
+    localStorage.setItem(`sim-connect-${projectName}`, JSON.stringify({ projectName, nodes, edges, savedAt: new Date().toISOString() }))
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }, [nodes, edges, projectName])
 
   const clearCanvas = useCallback(() => {
-    if (window.confirm('Limpar diagrama?')) {
-      setNodes([])
-      setEdges([])
-      setProjectName('Novo Projeto')
-    }
+    if (window.confirm('Limpar diagrama?')) { setNodes([]); setEdges([]); setProjectName('Novo Projeto') }
   }, [])
 
   const deleteSelected = useCallback(() => {
@@ -142,81 +126,39 @@ export default function App() {
   if (!authed) return <LoginScreen onLogin={login} />
 
   return (
-    <div style={{
-      display: 'flex',
-      height: '100vh',
-      backgroundColor: '#0b0c0f',
-      overflow: 'hidden',
-      flexDirection: 'column'
-    }}>
+    <div className="app-root">
 
-      {/* TOOLBAR TOPO */}
-      <div style={{
-        backgroundColor: '#1a1b1f',
-        borderBottom: '1px solid #2a2b2f',
-        display: 'flex',
-        alignItems: 'center',
-        padding: `env(safe-area-inset-top) 12px 0 12px`,
-        minHeight: 48,
-        paddingBottom: 8,
-        paddingTop: `max(env(safe-area-inset-top), 8px)`,
-        gap: 8,
-        flexShrink: 0,
-        zIndex: 10
-      }}>
+      {/* TOOLBAR */}
+      <div className="toolbar">
         {!isMobile && (
-          <button
-            onClick={() => setSidebarOpen(s => !s)}
-            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', fontSize: 18, cursor: 'pointer', padding: 4 }}
-          >
+          <button onClick={() => setSidebarOpen(s => !s)}
+            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', fontSize: 20, cursor: 'pointer' }}>
             ☰
           </button>
         )}
-        <img src="/logo.png" alt="SIM" style={{ height: 30, width: 'auto', objectFit: 'contain' }} />
-        {!isMobile && (
-          <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11 }}>Connect</span>
-        )}
+        <img src="/logo.png" alt="SIM" style={{ height: 32, width: 'auto', objectFit: 'contain' }} />
+        {!isMobile && <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11 }}>Connect</span>}
         <div style={{ flex: 1 }} />
         <input
           value={projectName}
           onChange={e => setProjectName(e.target.value)}
           style={{
-            backgroundColor: '#0b0c0f',
-            border: '1px solid #2a2b2f',
-            borderRadius: 6,
-            padding: '4px 8px',
-            fontSize: 11,
-            color: 'white',
-            textAlign: 'center',
-            width: isMobile ? 130 : 180,
-            outline: 'none'
+            background: '#0b0c0f', border: '1px solid #2a2b2f', borderRadius: 6,
+            padding: '4px 8px', fontSize: 11, color: 'white', textAlign: 'center',
+            width: isMobile ? 140 : 180, outline: 'none'
           }}
         />
         <div style={{ flex: 1 }} />
-        {!isMobile && (
-          <>
-            <button onClick={clearCanvas} style={{ padding: '6px 10px', fontSize: 11, border: '1px solid #2a2b2f', borderRadius: 6, backgroundColor: 'transparent', color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}>
-              Limpar
-            </button>
-            <button onClick={handleSaveTemplate} style={{ padding: '6px 10px', fontSize: 11, border: '1px solid #2a2b2f', borderRadius: 6, backgroundColor: 'transparent', color: 'rgba(255,255,255,0.6)', cursor: 'pointer' }}>
-              Guardar Template
-            </button>
-            <button onClick={saveProject} style={{ padding: '6px 10px', fontSize: 11, border: '1px solid #2a2b2f', borderRadius: 6, backgroundColor: saved ? '#1a4a2a' : 'transparent', color: saved ? '#00C896' : 'rgba(255,255,255,0.6)', cursor: 'pointer' }}>
-              {saved ? '✓ Guardado' : 'Guardar'}
-            </button>
-          </>
-        )}
-        <button onClick={handleExport} style={{ padding: '6px 12px', fontSize: 11, border: 'none', borderRadius: 6, backgroundColor: '#E8571A', color: 'white', fontWeight: 'bold', cursor: 'pointer' }}>
-          PDF
-        </button>
-        {!isMobile && (
-          <button onClick={logout} style={{ padding: '6px 10px', fontSize: 11, border: '1px solid #2a2b2f', borderRadius: 6, backgroundColor: 'transparent', color: 'rgba(255,255,255,0.3)', cursor: 'pointer' }}>
-            Sair
-          </button>
-        )}
+        {!isMobile && <>
+          <button onClick={clearCanvas} style={{ padding: '5px 10px', fontSize: 11, border: '1px solid #2a2b2f', borderRadius: 6, background: 'transparent', color: 'rgba(255,255,255,0.4)', cursor: 'pointer' }}>Limpar</button>
+          <button onClick={handleSaveTemplate} style={{ padding: '5px 10px', fontSize: 11, border: '1px solid #2a2b2f', borderRadius: 6, background: 'transparent', color: 'rgba(255,255,255,0.6)', cursor: 'pointer' }}>Template</button>
+          <button onClick={saveProject} style={{ padding: '5px 10px', fontSize: 11, border: '1px solid #2a2b2f', borderRadius: 6, background: saved ? '#1a4a2a' : 'transparent', color: saved ? '#00C896' : 'rgba(255,255,255,0.6)', cursor: 'pointer' }}>{saved ? '✓ Guardado' : 'Guardar'}</button>
+        </>}
+        <button onClick={handleExport} style={{ padding: '5px 12px', fontSize: 11, border: 'none', borderRadius: 6, background: '#E8571A', color: 'white', fontWeight: 'bold', cursor: 'pointer' }}>PDF</button>
+        {!isMobile && <button onClick={logout} style={{ padding: '5px 10px', fontSize: 11, border: '1px solid #2a2b2f', borderRadius: 6, background: 'transparent', color: 'rgba(255,255,255,0.3)', cursor: 'pointer' }}>Sair</button>}
       </div>
 
-      {/* CONTEÚDO PRINCIPAL */}
+      {/* MAIN */}
       <div style={{ flex: 1, display: 'flex', overflow: 'hidden', position: 'relative' }}>
 
         {/* SIDEBAR DESKTOP */}
@@ -233,16 +175,12 @@ export default function App() {
         )}
 
         {/* CANVAS */}
-        <div style={{ flex: 1, position: 'relative' }} ref={flowRef}>
+        <div className="canvas-wrap" ref={flowRef}>
           <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            nodeTypes={nodeTypes}
-            fitView
-            proOptions={{ hideAttribution: true }}
+            nodes={nodes} edges={edges}
+            onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}
+            onConnect={onConnect} nodeTypes={nodeTypes}
+            fitView proOptions={{ hideAttribution: true }}
             onNodeClick={(_, node) => setSelectedNodeId(node.id)}
             onPaneClick={() => setSelectedNodeId(null)}
           >
@@ -256,88 +194,48 @@ export default function App() {
                   const eq = EQUIPMENT.find(e => e.id === (n.data as any)?.equipmentId)
                   return eq ? eq.color : '#E8571A'
                 }}
-                nodeStrokeColor="#E8571A"
-                nodeBorderRadius={4}
+                nodeStrokeColor="#E8571A" nodeBorderRadius={4}
               />
             )}
           </ReactFlow>
 
           {/* BOTÃO APAGAR */}
           {selectedNodeId && (
-            <button
-              onClick={deleteSelected}
-              style={{
-                position: 'absolute',
-                top: 12,
-                right: 12,
-                backgroundColor: '#ff4444',
-                border: 'none',
-                borderRadius: 10,
-                padding: '12px 20px',
-                color: 'white',
-                fontWeight: 'bold',
-                fontSize: 15,
-                cursor: 'pointer',
-                zIndex: 100,
-                boxShadow: '0 4px 16px rgba(255,68,68,0.5)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8
-              }}
-            >
+            <button onClick={deleteSelected} style={{
+              position: 'absolute', top: 12, right: 12,
+              background: '#ff4444', border: 'none', borderRadius: 10,
+              padding: '12px 20px', color: 'white', fontWeight: 'bold',
+              fontSize: 15, cursor: 'pointer', zIndex: 100,
+              boxShadow: '0 4px 16px rgba(255,68,68,0.5)',
+              display: 'flex', alignItems: 'center', gap: 8
+            }}>
               🗑 Apagar
             </button>
           )}
         </div>
       </div>
 
-      {/* BARRA MOBILE DE BAIXO */}
+      {/* BARRA MOBILE */}
       {isMobile && (
-        <div style={{
-          backgroundColor: '#1a1b1f',
-          borderTop: '1px solid #2a2b2f',
-          display: 'flex',
-          alignItems: 'stretch',
-          flexShrink: 0,
-          zIndex: 10,
-          paddingBottom: 'env(safe-area-inset-bottom)'
-        }}>
-          {[
-            { key: 'equipment', icon: '📦', label: 'Equipamentos' },
-            { key: 'templates', icon: '📋', label: 'Templates' },
-            { key: 'guardar', icon: saved ? '✓' : '💾', label: saved ? 'Guardado' : 'Guardar' },
-            { key: 'sair', icon: '🚪', label: 'Sair' },
-          ].map(btn => (
-            <button
-              key={btn.key}
-              onClick={() => {
-                if (btn.key === 'equipment') setMobileTab(t => t === 'equipment' ? null : 'equipment')
-                else if (btn.key === 'templates') setMobileTab(t => t === 'templates' ? null : 'templates')
-                else if (btn.key === 'guardar') saveProject()
-                else if (btn.key === 'sair') logout()
-              }}
-              style={{
-                flex: 1,
-                minHeight: 56,
-                border: 'none',
-                backgroundColor: (btn.key === 'equipment' && mobileTab === 'equipment') || (btn.key === 'templates' && mobileTab === 'templates') ? '#E8571A22' : (btn.key === 'guardar' && saved) ? '#1a4a2a' : 'transparent',
-                color: (btn.key === 'equipment' && mobileTab === 'equipment') || (btn.key === 'templates' && mobileTab === 'templates') ? '#E8571A' : (btn.key === 'guardar' && saved) ? '#00C896' : 'rgba(255,255,255,0.5)',
-                fontSize: 9,
-                fontWeight: 'bold',
-                textTransform: 'uppercase',
-                letterSpacing: 0.5,
-                cursor: 'pointer',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 4
-              }}
-            >
-              <span style={{ fontSize: 22 }}>{btn.icon}</span>
-              {btn.label}
-            </button>
-          ))}
+        <div className="bottom-bar">
+          <button className={`bottom-bar-btn ${mobileTab === 'equipment' ? 'active' : ''}`}
+            onClick={() => setMobileTab(t => t === 'equipment' ? null : 'equipment')}>
+            <span style={{ fontSize: 22 }}>📦</span>
+            Equipamentos
+          </button>
+          <button className={`bottom-bar-btn ${mobileTab === 'templates' ? 'active' : ''}`}
+            onClick={() => setMobileTab(t => t === 'templates' ? null : 'templates')}>
+            <span style={{ fontSize: 22 }}>📋</span>
+            Templates
+          </button>
+          <button className={`bottom-bar-btn ${saved ? 'saved' : ''}`} onClick={saveProject}>
+            <span style={{ fontSize: 22 }}>{saved ? '✓' : '💾'}</span>
+            {saved ? 'Guardado' : 'Guardar'}
+          </button>
+          <button className="bottom-bar-btn" onClick={logout}>
+            <span style={{ fontSize: 22 }}>🚪</span>
+            Sair
+          </button>
         </div>
       )}
 
