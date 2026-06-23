@@ -148,7 +148,7 @@ export default function App() {
           >
             ☰
           </button>
-          <img src="/logo.png" alt="SIM" style={{ height: 28, objectFit: 'contain' }} />
+          <img src="/logo.png" alt="SIM" style={{ height: 36, objectFit: 'contain' }} />
           <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: 11 }}>Connect</span>
           <div style={{ flex: 1 }} />
           <input
