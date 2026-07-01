@@ -37,7 +37,17 @@ export default function App() {
   const [templateRefresh, setTemplateRefresh] = useState(0)
   const [mobileTab, setMobileTab] = useState<'equipment' | 'templates' | null>(null)
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null)
+  const [selectedEdgeId, setSelectedEdgeId] = useState<string | null>(null)
+  const [editingEdgeId, setEditingEdgeId] = useState<string | null>(null)
+  const [edgeNoteValue, setEdgeNoteValue] = useState('')
   const flowRef = useRef<HTMLDivElement>(null)
+  const noteInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (editingEdgeId && noteInputRef.current) {
+      noteInputRef.current.focus()
+    }
+  }, [editingEdgeId])
 
   const onConnect = useCallback((params: Connection) => {
     const sourceNode = (nodes as Node[]).find((n: Node) => n.id === params.source)
@@ -47,7 +57,12 @@ export default function App() {
       ...params,
       id: `edge-${Date.now()}`,
       animated: true,
-      style: { stroke: port ? SIGNAL_COLORS[port.signalType] : '#E8571A', strokeWidth: 2 },
+      style: { stroke: port ? SIGNAL_COLORS[port.signalType] : '#E8571A', strokeWidth: 3 },
+      label: port?.signalType || 'SDI',
+      labelStyle: { fill: 'white', fontSize: 9, fontFamily: 'monospace', fontWeight: 700 },
+      labelBgStyle: { fill: '#111214', fillOpacity: 0.9 },
+      labelBgPadding: [4, 3] as [number, number],
+      labelBgBorderRadius: 3,
       data: { signalType: port?.signalType || 'SDI', cable: '' }
     } as unknown as Edge, eds))
   }, [nodes])
@@ -123,6 +138,27 @@ export default function App() {
     setSelectedNodeId(null)
   }, [selectedNodeId])
 
+  const openEdgeNote = useCallback(() => {
+    if (!selectedEdgeId) return
+    const edge = (edges as Edge[]).find(e => e.id === selectedEdgeId)
+    const current = edge ? ((edge.data as any)?.cable || '') : ''
+    setEdgeNoteValue(current)
+    setEditingEdgeId(selectedEdgeId)
+  }, [selectedEdgeId, edges])
+
+  const saveEdgeNote = useCallback(() => {
+    if (!editingEdgeId) return
+    setEdges((eds: Edge[]) => eds.map(e => e.id === editingEdgeId ? {
+      ...e,
+      label: edgeNoteValue
+        ? `${(e.data as any)?.signalType || 'SDI'} · ${edgeNoteValue}`
+        : (e.data as any)?.signalType || 'SDI',
+      data: { ...(e.data as any), cable: edgeNoteValue }
+    } : e))
+    setEditingEdgeId(null)
+    setSelectedEdgeId(null)
+  }, [editingEdgeId, edgeNoteValue])
+
   if (!authed) return <LoginScreen onLogin={login} />
 
   return (
@@ -181,8 +217,9 @@ export default function App() {
             onNodesChange={onNodesChange} onEdgesChange={onEdgesChange}
             onConnect={onConnect} nodeTypes={nodeTypes}
             fitView proOptions={{ hideAttribution: true }}
-            onNodeClick={(_, node) => setSelectedNodeId(node.id)}
-            onPaneClick={() => setSelectedNodeId(null)}
+            onPaneClick={() => { setSelectedNodeId(null); setSelectedEdgeId(null); setEditingEdgeId(null) }}
+            onEdgeClick={(_, edge) => { setSelectedEdgeId(edge.id); setSelectedNodeId(null) }}
+            onNodeClick={(_, node) => { setSelectedNodeId(node.id); setSelectedEdgeId(null); setEditingEdgeId(null) }}
           >
             <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="#2a2b2f" />
             {!isMobile && <Controls />}
@@ -199,13 +236,90 @@ export default function App() {
             )}
           </ReactFlow>
 
-          {/* BOTÃO APAGAR */}
+          {/* PAINEL NOTA DA LIGAÇÃO */}
+          {editingEdgeId && (
+            <div style={{
+              position: 'absolute', top: 12, left: 12,
+              backgroundColor: '#1a1b1f',
+              border: '1px solid #4A9EFF',
+              borderRadius: 12,
+              padding: '12px 14px',
+              zIndex: 200,
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8,
+              boxShadow: '0 8px 24px rgba(0,0,0,0.8)',
+              minWidth: 260
+            }}>
+              <div style={{ color: '#4A9EFF', fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1 }}>
+                ✏️ Nota da ligação
+              </div>
+              <input
+                ref={noteInputRef}
+                value={edgeNoteValue}
+                onChange={e => setEdgeNoteValue(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') saveEdgeNote(); if (e.key === 'Escape') setEditingEdgeId(null) }}
+                placeholder="ex: SDI 35m, XLR 50m..."
+                style={{
+                  backgroundColor: '#0b0c0f',
+                  border: '1px solid #2a2b2f',
+                  borderRadius: 6,
+                  padding: '8px 10px',
+                  fontSize: 12,
+                  color: 'white',
+                  outline: 'none',
+                  fontFamily: 'monospace'
+                }}
+              />
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button
+                  onClick={saveEdgeNote}
+                  style={{
+                    flex: 1, padding: '7px 0', fontSize: 11, border: 'none',
+                    borderRadius: 6, background: '#4A9EFF', color: 'white',
+                    fontWeight: 'bold', cursor: 'pointer'
+                  }}
+                >
+                  Guardar
+                </button>
+                <button
+                  onClick={() => setEditingEdgeId(null)}
+                  style={{
+                    padding: '7px 12px', fontSize: 11, border: '1px solid #2a2b2f',
+                    borderRadius: 6, background: 'transparent', color: 'rgba(255,255,255,0.4)',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Cancelar
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* BOTÃO NOTA LIGAÇÃO */}
+          {selectedEdgeId && !editingEdgeId && (
+            <button
+              onClick={openEdgeNote}
+              style={{
+                position: 'absolute', top: 12, left: 12,
+                background: '#4A9EFF', border: 'none', borderRadius: 10,
+                padding: '10px 16px', color: 'white', fontWeight: 'bold',
+                fontSize: 13, cursor: 'pointer', zIndex: 100,
+                boxShadow: '0 4px 16px rgba(74,158,255,0.4)',
+                display: 'flex', alignItems: 'center', gap: 8
+              }}
+            >
+              ✏️ Nota da ligação
+            </button>
+          )}
+
+          {/* BOTÃO APAGAR NODE */}
           {selectedNodeId && (
             <button onClick={deleteSelected} style={{
               position: 'absolute', top: 12, right: 12,
               background: '#ff4444', border: 'none', borderRadius: 10,
-              padding: '12px 20px', color: 'white', fontWeight: 'bold',
-              fontSize: 15, cursor: 'pointer', zIndex: 100,
+              padding: '10px 16px', color: 'white', fontWeight: 'bold',
+              fontSize: 13, cursor: 'pointer', zIndex: 100,
               boxShadow: '0 4px 16px rgba(255,68,68,0.5)',
               display: 'flex', alignItems: 'center', gap: 8
             }}>
